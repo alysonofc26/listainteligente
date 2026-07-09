@@ -1,0 +1,21 @@
+{
+  "name": "lista-inteligente",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lista Inteligente - Assistente inteligente de compras",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "typecheck": "npm run typecheck --workspace=apps/web",
+    "clean": "npm run clean --workspace=apps/web"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}
