@@ -23,9 +23,9 @@ export function useCamera(
   const { facingMode = "environment", aspectRatio = 4 / 3 } = options;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const facingRef = useRef(facingMode);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentFacing, setCurrentFacing] = useState(facingMode);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -46,10 +46,10 @@ export function useCamera(
 
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: currentFacing,
+          facingMode: facingRef.current,
           aspectRatio,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
         audio: false,
       };
@@ -76,7 +76,12 @@ export function useCamera(
       setError(message);
       setIsStreaming(false);
     }
-  }, [currentFacing, aspectRatio, stopCamera]);
+  }, [aspectRatio, stopCamera]);
+
+  const switchCamera = useCallback(() => {
+    facingRef.current = facingRef.current === "environment" ? "user" : "environment";
+    startCamera();
+  }, [startCamera]);
 
   const captureFrame = useCallback((): string | null => {
     const video = videoRef.current;
@@ -93,21 +98,11 @@ export function useCamera(
     return canvas.toDataURL("image/jpeg", 0.9);
   }, []);
 
-  const switchCamera = useCallback(() => {
-    setCurrentFacing((prev) => (prev === "environment" ? "user" : "environment"));
-  }, []);
-
   useEffect(() => {
     return () => {
       stopCamera();
     };
   }, [stopCamera]);
-
-  useEffect(() => {
-    if (currentFacing) {
-      startCamera();
-    }
-  }, [currentFacing, startCamera]);
 
   return {
     videoRef,
