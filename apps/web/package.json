@@ -41,7 +41,9 @@
     "price-engine": "*",
     "ocr": "*",
     "history": "*",
-    "statistics": "*"
+    "statistics": "*",
+    "ai": "*",
+    "scrapers": "*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
