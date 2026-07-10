@@ -26,7 +26,7 @@ apps/web (Next.js 15 - App Router)
   ├── components/        # Componentes React
   │   ├── layout/        # Sidebar, Header, AuthProvider
   │   ├── ui/            # shadcn/ui components
-  │   └── scanner/       # Scanner OCR components
+  │   └── scanner/       # Scanner OCR e Cupom components
   └── app/               # Páginas (App Router)
       ├── (dashboard)/   # Dashboard, Listas, Histórico, Scanner, Comparador
       ├── login/         # Autenticação
@@ -54,7 +54,15 @@ Server Action (lib/actions/comparador.ts)
     ↓
 ComparisonService (lib/services/comparison-service.ts)
     ↓
-SearchService (packages/scrapers) → Carrefour, Assaí, Atacadão
+SearchService (packages/scrapers)
+    ↓
+ScraperRegistry.getAll() → Carrefour, Assaí, Atacadão, Pão de Açúcar
+    ↓
+Cada scraper delega para sua ScraperStrategy:
+  ├── Carrefour → VtexApiStrategy (api.catalog_system/pub/products/search)
+  ├── Atacadão  → VtexApiStrategy (mesma API)
+  ├── Assaí     → NoopStrategy (retorna vazio)
+  └── Pão de Açúcar → NoopStrategy (retorna vazio)
     ↓
 ProductResult[] padronizados
     ↓
@@ -74,7 +82,7 @@ Câmera → Tesseract OCR (client-side)
     ↓
 receipt-parser.ts (classificação de linhas)
     ↓
-receipt-normalizer.ts (normalização nomes/unidades)
+receipt-normalizer.ts (normalização nomes/unidades/categorias)
     ↓
 receipt-validator.ts (validação data/itens/totais)
     ↓
@@ -87,7 +95,7 @@ History Module → /historico + /historico/[id]
 Statistics Module → /dashboard
 ```
 
-## Fluxo de Dados — Scrapers
+## Fluxo de Dados — Scrapers (Arquitetura Atual)
 
 ```
 SearchService.searchAll("arroz")
@@ -95,10 +103,16 @@ SearchService.searchAll("arroz")
 ScraperRegistry.getAll() → [Carrefour, Assaí, Atacadão, Pão de Açúcar]
     ↓
 Promise.allSettled(...)
-    ├── Carrefour: fetch → CarrefourParser (regex HTML) → CarrefourMapper → ProductResult
-    ├── Assaí: fetch → AssaiParser (Drupal views) → AssaiMapper → ProductResult
-    ├── Atacadão: fetch → AtacadaoParser (JSON-LD) → AtacadaoMapper → ProductResult
-    └── Pão de Açúcar: não implementado
+    ├── Carrefour → VtexApiStrategy
+    │     └── GET /api/catalog_system/pub/products/search/arroz
+    │         → JSON → ProductResult (nome, marca, preço, imagem, disponibilidade)
+    ├── Atacadão → VtexApiStrategy
+    │     └── GET /api/catalog_system/pub/products/search/arroz
+    │         → JSON → ProductResult
+    ├── Assaí → NoopStrategy
+    │     └── Retorna { products: [], total: 0 }
+    └── Pão de Açúcar → NoopStrategy
+          └── Retorna { products: [], total: 0 }
     ↓
 AggregatedSearchResult (flat + bySupermarket)
 ```
@@ -120,15 +134,29 @@ AggregatedSearchResult (flat + bySupermarket)
 - Cliente Supabase SSR para autenticação
 
 ### Scrapers com Strategy Pattern
-- Interface `ScraperInterface` comum
-- Registry para descoberta
+- Interface `ScraperInterface` comum para todos os scrapers
+- `ScraperStrategy` interface separada para as estratégias de busca
+- `VtexApiStrategy` consumindo API VTEC Catalog System diretamente (JSON)
+- `NoopStrategy` para supermercados sem e-commerce
+- Cada scraper instancia sua estratégia internamente
+- Registry para descoberta via `ScraperRegistry`
 - `Promise.allSettled` para tolerância a falhas
+
+### Estratégias de scraping por prioridade
+1. **API JSON nativa** (VTEX Catalog System) — mais confiável e rica
+2. **NoopStrategy** — fallback para sites institucionais sem e-commerce
+3. (Futuro) GraphQL, JSON-LD, DOM, Regex em ordem decrescente de confiabilidade
 
 ### AI Service isolado
 - Provider abstraction (GroqProvider implementa AiProvider)
 - ContextBuilder serializa dados → Markdown
 - System prompt em português brasileiro
 - Regras rígidas: nunca inventar preços
+
+### OCR processado 100% no cliente
+- Tesseract.js roda no navegador (sem custo de servidor)
+- Pré-processamento (escala de cinza + binarização + redimensionamento) antes do OCR
+- Pipeline de validação e normalização pós-OCR
 
 ## Estrutura do Banco de Dados (Supabase)
 
@@ -138,6 +166,6 @@ Tabelas principais:
 - `supermarkets` — Supermercados cadastrados
 - `product_prices` — Preços históricos (scrapers)
 - `categories` — Categorias de produtos
-- Profiles (gerenciado pelo Supabase Auth)
+- `profiles` — Gerenciado pelo Supabase Auth
 
 RLS habilitado em todas as tabelas — usuários veem apenas seus próprios dados.

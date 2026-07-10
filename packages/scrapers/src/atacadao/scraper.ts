@@ -2,52 +2,33 @@ import type { ProductResult, SearchResult } from "types";
 import type { ScraperInterface } from "../interfaces/scraper.interface";
 import type { ScraperConfig } from "../interfaces/scraper.interface";
 import { BaseScraper } from "../interfaces/base-scraper";
-import { ATACADAO } from "./constants";
-import { AtacadaoParser } from "./parser";
-import { AtacadaoMapper } from "./mapper";
+import { VtexApiStrategy } from "../strategies/vtex-api-strategy";
+
+const SUPERMARKET_ID = "atacadao";
+const SUPERMARKET_NAME = "Atacadão";
+const BASE_URL = "https://www.atacadao.com.br";
+const RATE_LIMIT_MS = 1000;
 
 export class AtacadaoScraper extends BaseScraper implements ScraperInterface {
-  readonly supermarketId = ATACADAO.SUPERMARKET_ID;
+  readonly supermarketId = SUPERMARKET_ID;
 
   readonly config: ScraperConfig = {
-    baseUrl: ATACADAO.BASE_URL,
-    searchPath: ATACADAO.SEARCH_PATH,
-    rateLimitMs: ATACADAO.RATE_LIMIT_MS,
+    baseUrl: BASE_URL,
+    searchPath: "/busca",
+    rateLimitMs: RATE_LIMIT_MS,
   };
 
-  private readonly parser = new AtacadaoParser();
-  private readonly mapper = new AtacadaoMapper();
+  private readonly strategy = new VtexApiStrategy({
+    supermarketId: SUPERMARKET_ID,
+    supermarketName: SUPERMARKET_NAME,
+    baseUrl: BASE_URL,
+  });
 
   async search(query: string): Promise<SearchResult> {
-    const searchUrl = `${this.config.baseUrl}${this.config.searchPath}?q=${encodeURIComponent(query)}`;
-    const html = await this.fetch(searchUrl);
-
-    if (!this.parser.isSearchablePage(html)) {
-      return {
-        products: [],
-        total: 0,
-        query,
-        supermarket: this.supermarketId,
-      };
-    }
-
-    const parsed = this.parser.parseSearchResults(html, this.config.baseUrl);
-    const products = this.mapper.toProductResults(parsed);
-
-    return {
-      products,
-      total: products.length,
-      query,
-      supermarket: this.supermarketId,
-    };
+    return this.strategy.search(query);
   }
 
   async getProduct(url: string): Promise<ProductResult | null> {
-    const html = await this.fetch(url);
-    const parsed = this.parser.parseProductPage(html, url);
-
-    if (!parsed) return null;
-
-    return this.mapper.toProductResult(parsed);
+    return this.strategy.getProduct(url);
   }
 }

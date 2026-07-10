@@ -1,6 +1,6 @@
 # Lista Inteligente
 
-Assistente inteligente de compras — compare preços, escaneie cupons, acompanhe gastos e economize com IA.
+Assistente inteligente de compras — compare preços, escaneie produtos e cupons, acompanhe gastos e economize com IA.
 
 > **Versão:** 1.0.0 (MVP)
 
@@ -9,11 +9,12 @@ Assistente inteligente de compras — compare preços, escaneie cupons, acompanh
 ## Funcionalidades
 
 - **Listas de compras** — Crie e gerencie listas com quantidades e preços estimados
-- **Comparador Inteligente** — Compare preços em tempo real entre Carrefour, Assaí e Atacadão
-- **Scanner OCR** — Escaneie produtos e cupons fiscais com a câmera
+- **Comparador Inteligente** — Compare preços em tempo real entre supermercados via APIs nativas (VTEX Catalog API)
+- **Scanner OCR** — Escaneie etiquetas de produtos usando a câmera do celular com reconhecimento de texto (Tesseract.js)
+- **Scanner de Cupom Fiscal** — Fotografe cupons fiscais e extraia todos os itens, preços e totais automaticamente
 - **Histórico de compras** — Consulte, filtre e reabra compras anteriores
 - **Dashboard** — Estatísticas de gastos por categoria, supermercado e evolução mensal
-- **IA (Groq)** — Recomendações inteligentes baseadas nos seus dados reais
+- **IA (Groq)** — Recomendações inteligentes baseadas nos seus dados reais de comparação
 
 ## Stack
 
@@ -22,7 +23,7 @@ Assistente inteligente de compras — compare preços, escaneie cupons, acompanh
 | Frontend | Next.js 15, React 19, TypeScript, TailwindCSS |
 | UI | shadcn/ui, Lucide Icons, Radix UI |
 | Backend | Supabase (PostgreSQL, Auth, Storage) |
-| OCR | Tesseract.js |
+| OCR | Tesseract.js (client-side) |
 | IA | Groq API (llama-3.3-70b-versatile) |
 | Hospedagem | Vercel |
 | Código | GitHub, npm workspaces |
@@ -32,18 +33,21 @@ Assistente inteligente de compras — compare preços, escaneie cupons, acompanh
 ```
 /
 ├── apps/web/              # Next.js 15 App Router
+│   ├── app/               # Páginas (App Router)
+│   ├── components/        # Componentes React (layout, scanner, ui)
+│   └── lib/               # Server Actions, serviços, cliente Supabase
 ├── packages/
 │   ├── types/             # Tipos TypeScript compartilhados
-│   ├── shared/            # Utilitários (currency, format, validation)
+│   ├── shared/            # Utilitários (formatCurrency, validação)
 │   ├── database/          # Cliente Supabase + repositórios
 │   ├── price-engine/      # Motor financeiro (cálculos, economia, comparações)
 │   ├── ocr/               # OCR + parsers + normalizador + validador
 │   ├── ai/                # Integração Groq (provider, prompts, context)
-│   ├── scrapers/          # Scrapers de supermercados (Strategy Pattern)
+│   ├── scrapers/          # Scrapers de supermercados (Strategy Pattern + VTEX API)
 │   ├── history/           # Histórico de compras (Service/Repository)
 │   └── statistics/        # Estatísticas e agregadores
-├── docs/                  # Documentação
-└── supabase/              # Schema do banco de dados
+├── docs/                  # Documentação técnica
+└── supabase/              # Schema SQL do banco
 ```
 
 ## Pré-requisitos
@@ -91,8 +95,7 @@ Isso criará:
 npm run dev
 
 # Typecheck em todos os pacotes
-npm run typecheck --workspace=packages/price-engine
-npm run typecheck --workspace=apps/web
+npm run typecheck
 
 # Build completo
 npm run build
@@ -139,12 +142,12 @@ npm run build
 
 - [Arquitetura](docs/architecture/ARQUITETURA.md) — Módulos, fluxos e decisões técnicas
 - [MVP 1.0](docs/MVP-1.0.md) — Funcionalidades entregues em cada sprint
-- [Schema do BD](supabase/schema.sql) — Estrutura do banco de dados
+- [Schema do BD](docs/database/schema.md) — Estrutura do banco de dados
 
 ## Roadmap Futuro
 
 - Notificações de promoções
-- Suporte a mais supermercados
+- **Suporte a mais supermercados VTEX** — Extra, PontoFrio e Casas Bahia também usam VTEX e podem ser integrados rapidamente reaproveitando a `VtexApiStrategy`
 - App mobile (React Native)
 - Compartilhamento de listas
 - Metas de economia

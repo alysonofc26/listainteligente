@@ -6,8 +6,8 @@
 
 | Tabela | Descrição |
 |--------|-----------|
-| `users` | Perfis dos usuários (sincronizado com auth.users) |
-| `supermarkets` | Supermercados cadastrados |
+| `profiles` | Perfis dos usuários (sincronizado com auth.users via trigger) |
+| `supermarkets` | Supermercados cadastrados (Carrefour, Assaí, Atacadão, Pão de Açúcar) |
 | `products` | Catálogo de produtos |
 | `product_prices` | Preços por produto/supermercado |
 | `price_history` | Histórico de preços |
@@ -20,9 +20,9 @@
 ### Relacionamentos
 
 ```
-users 1---* lists
-users 1---* receipts
-users 1---* favorites
+profiles 1---* lists
+profiles 1---* receipts
+profiles 1---* favorites
 lists 1---* list_items
 products 1---* product_prices
 products 1---* price_history
@@ -35,7 +35,7 @@ receipts 1---* receipt_items
 
 ### RLS (Row Level Security)
 
-- **users**: Apenas o próprio usuário
+- **profiles**: Apenas o próprio usuário
 - **lists**: Apenas o dono da lista
 - **list_items**: Herda permissão da lista
 - **receipts**: Apenas o dono do recibo

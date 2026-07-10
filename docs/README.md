@@ -7,8 +7,9 @@ Assistente inteligente de compras que ajuda você antes, durante e depois das co
 - **Frontend:** Next.js 15, React 19, TypeScript, TailwindCSS
 - **UI:** shadcn/ui, Lucide Icons
 - **Backend:** Supabase (PostgreSQL, Auth, Storage)
-- **OCR:** Tesseract.js
-- **IA:** Groq API
+- **OCR:** Tesseract.js (client-side)
+- **IA:** Groq API (llama-3.3-70b-versatile)
+- **Scrapers:** VTEX Catalog API (Carrefour, Atacadão), Strategy Pattern
 - **Hospedagem:** Vercel
 
 ## Estrutura
@@ -16,19 +17,26 @@ Assistente inteligente de compras que ajuda você antes, durante e depois das co
 ```
 /
 ├── apps/
-│   └── web/              # Next.js application
+│   └── web/              # Next.js 15 App Router
 ├── packages/
-│   ├── ui/               # Shared UI components
-│   ├── database/         # Database client & repositories
-│   ├── shared/           # Shared utilities
-│   ├── types/            # TypeScript shared types
-│   ├── ai/               # Groq AI integration
-│   ├── ocr/              # Tesseract OCR service
-│   └── scrapers/         # Supermarket scrapers
-├── docs/                 # Documentation
-├── supabase/             # Database schema & migrations
-└── public/               # Static assets
+│   ├── types/             # Tipos TypeScript compartilhados
+│   ├── shared/            # Utilitários (currency, format, validation)
+│   ├── database/          # Cliente Supabase + repositórios
+│   ├── price-engine/      # Motor financeiro (cálculos, economia, comparações)
+│   ├── ocr/               # OCR + parsers + normalizador + validador
+│   ├── ai/                # Integração Groq (provider, prompts, context)
+│   ├── scrapers/          # Scrapers de supermercados (VtexApiStrategy, NoopStrategy)
+│   ├── history/           # Histórico de compras (Service/Repository)
+│   └── statistics/        # Estatísticas e agregadores
+├── docs/                  # Documentação
+└── supabase/              # Schema SQL do banco
 ```
+
+## Documentação Principal
+
+- [Arquitetura](architecture/ARQUITETURA.md) — Módulos, fluxos e decisões técnicas
+- [MVP 1.0](../MVP-1.0.md) — Funcionalidades entregues por sprint
+- [Schema do BD](database/schema.md) — Estrutura do banco de dados
 
 ## Começando
 

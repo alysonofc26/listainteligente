@@ -6,11 +6,11 @@ Assistente inteligente de compras que ajuda o usuário antes, durante e depois d
 
 ### Antes da compra
 - Criar listas de compras inteligentes
-- Comparar preços entre supermercados em tempo real
+- Comparar preços entre supermercados em tempo real via APIs nativas
 - Identificar onde cada produto é mais barato
 
 ### Durante a compra
-- Escanear código de barras e etiquetas com OCR
+- Escanear etiquetas de produtos com OCR (câmera do celular)
 - Escanear cupom fiscal completo
 - Calcular total da compra
 
@@ -47,15 +47,17 @@ Assistente inteligente de compras que ajuda o usuário antes, durante e depois d
 - Componentes: camera-preview, scan-result
 - Página: /scanner
 
-### Sprint 4-6 — Scrapers
-- Strategy Pattern com ScraperInterface
+### Sprint 4-6 — Scrapers (Arquitetura com Strategy Pattern)
+- **ScraperStrategy** — Interface genérica que cada estratégia implementa
+- **VtexApiStrategy** — Estratégia que consome a API nativa VTEX Catalog System (`/api/catalog_system/pub/products/search/`) retornando JSON completo: nome, marca, preço, imagem, EAN, disponibilidade, parcelamento
+- **NoopStrategy** — Estratégia vazia para supermercados sem e-commerce próprio
+- **CarrefourScraper** — Usa VtexApiStrategy com base `carrefour.com.br`
+- **AtacadaoScraper** — Usa VtexApiStrategy com base `atacadao.com.br`
+- **AssaiScraper** — Usa NoopStrategy (site Drupal institucional sem e-commerce)
+- **PaoDeAcucarScraper** — Usa NoopStrategy (API não disponível)
 - ScraperRegistry para descoberta
-- SearchService para busca agregada
-- CarrefourScraper: regex HTML em e-commerce tradicional
-- AssaiScraper: site institucional Drupal
-- AtacadaoScraper: JSON-LD em Next.js + VTEX
-- Health checks para cada scraper
-- Documentação individual por scraper
+- SearchService para busca agregada com Promise.allSettled
+- Todo scraper implementa `ScraperInterface` mantendo compatibilidade com ComparisonService
 
 ### Sprint 7 — IA (Groq)
 - AiService como entry point único
@@ -93,17 +95,29 @@ Assistente inteligente de compras que ajuda o usuário antes, durante e depois d
 - Dashboard atualizado com dados reais: cards, supermercados, categorias, evolução mensal, top produtos
 
 ### Sprint 11 — Comparador Inteligente
-- Price Engine expandido (consolidateComparison, ComparisonSummary)
+- Price Engine expandido (consolidateComparison, ComparisonSummary, ProductComparison, ComparisonBySupermarket)
 - ComparisonService (orquestra listas → scrapers → price engine)
-- Comparador integrado com SearchService (scrapers)
+- Comparador integrado com SearchService (scrapers via VTEX API)
 - Página /comparador com:
-  - Cards de resumo (economia, produtos encontrados, supermercados)
+  - Cards de resumo (economia, produtos encontrados, supermercados, melhor supermercado)
   - Tabela comparativa por produto com destaque visual do menor preço
   - Resumo por supermercado com progress bars
   - Produtos não encontrados
   - Recomendações inteligentes da IA (Groq)
 - IA integrada com dados reais de comparação
 - Responsivo e seguindo o padrão visual do projeto
+
+## APIs e Serviços Conectados
+
+| Serviço | Função | Status |
+|---------|--------|--------|
+| Supabase (Auth) | Autenticação de usuários | ✅ Conectado |
+| Supabase (PostgreSQL) | Banco de dados principal | ✅ Conectado |
+| Supabase (Storage) | Armazenamento de imagens | ✅ Conectado |
+| Groq API (IA) | Recomendações inteligentes | ✅ Conectado |
+| Carrefour (VTEX API) | Consulta de preços em tempo real | ✅ Integrado |
+| Atacadão (VTEX API) | Consulta de preços em tempo real | ✅ Integrado |
+| Tesseract.js | OCR client-side (etiquetas e cupons) | ✅ Integrado |
 
 ## Arquitetura de Pacotes
 
@@ -128,6 +142,10 @@ Assistente inteligente de compras que ajuda o usuário antes, durante e depois d
 5. Escaneie um cupom fiscal em /scanner-cupom
 6. Acompanhe seu histórico em /historico
 7. Veja suas estatísticas em /dashboard
+
+## Expansão Futura (Supermercados VTEX)
+
+Extra, PontoFrio e Casas Bahia também utilizam a plataforma VTEX. Como a `VtexApiStrategy` já está implementada e testada, adicionar esses supermercados requer apenas criar um scraper simples que instancie a estratégia com a URL base correta — sem necessidade de escrever novo código de parser ou integração.
 
 ## Requisitos Técnicos
 

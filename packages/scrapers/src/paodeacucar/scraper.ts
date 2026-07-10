@@ -2,8 +2,10 @@ import type { ProductResult, SearchResult } from "types";
 import type { ScraperInterface } from "../interfaces/scraper.interface";
 import type { ScraperConfig } from "../interfaces/scraper.interface";
 import { BaseScraper } from "../interfaces/base-scraper";
+import { NoopStrategy } from "../strategies/noop-strategy";
 
 const SUPERMARKET_ID = "paodeacucar";
+const SUPERMARKET_NAME = "Pão de Açúcar";
 const BASE_URL = "https://www.paodeacucar.com.br";
 const SEARCH_PATH = "/busca";
 const RATE_LIMIT_MS = 2000;
@@ -17,11 +19,16 @@ export class PaoDeAcucarScraper extends BaseScraper implements ScraperInterface 
     rateLimitMs: RATE_LIMIT_MS,
   };
 
-  async search(_query: string): Promise<SearchResult> {
-    throw new Error(`Scraper for '${SUPERMARKET_ID}' not yet implemented`);
+  private readonly strategy = new NoopStrategy({
+    supermarketId: SUPERMARKET_ID,
+    supermarketName: SUPERMARKET_NAME,
+  });
+
+  async search(query: string): Promise<SearchResult> {
+    return this.strategy.search(query);
   }
 
-  async getProduct(_url: string): Promise<ProductResult | null> {
-    throw new Error(`Scraper for '${SUPERMARKET_ID}' not yet implemented`);
+  async getProduct(url: string): Promise<ProductResult | null> {
+    return this.strategy.getProduct(url);
   }
 }
