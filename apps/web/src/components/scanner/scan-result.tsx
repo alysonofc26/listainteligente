@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus, RotateCcw, ShoppingCart, AlertCircle } from "lucide-react";
+import { Check, Plus, RotateCcw, ShoppingCart, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { LabelResult, ParsedResult } from "ocr";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,7 @@ export function ScanResult({
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
   const data = result.data;
 
   async function handleAddToList() {
@@ -43,9 +44,10 @@ export function ScanResult({
     try {
       await onAddToList(data);
       setAdded(true);
+      const priceMsg = data.price !== null ? ` — ${formatCurrency(data.price)}` : "";
       toast({
         title: "Produto adicionado",
-        description: `"${data.productName}" foi adicionado à lista.`,
+        description: `"${data.productName}"${priceMsg} foi adicionado à lista.`,
       });
     } catch {
       toast({
@@ -115,6 +117,22 @@ export function ScanResult({
               </p>
             </div>
           </div>
+        )}
+
+        <div className="flex justify-center">
+          <button
+            onClick={() => setShowRaw(!showRaw)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showRaw ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            Texto reconhecido
+          </button>
+        </div>
+
+        {showRaw && (
+          <pre className="rounded-md bg-muted p-3 text-xs leading-relaxed whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+            {data.rawText}
+          </pre>
         )}
 
         <Separator />

@@ -11,9 +11,13 @@ export class LabelParser extends BaseParser<LabelResult> {
 
   parse(text: string, confidence: number): LabelResult {
     const cleaned = this.cleanText(text);
-    const price = this.extractPrice(cleaned);
-    const quantity = this.extractQuantity(cleaned);
+    let price = this.extractPrice(cleaned);
 
+    if (price === null) {
+      price = this.extractPriceFromRaw(text);
+    }
+
+    const quantity = this.extractQuantity(cleaned);
     const productName = this.extractProductName(cleaned, price);
 
     return {

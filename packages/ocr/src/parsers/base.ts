@@ -6,20 +6,33 @@ export abstract class BaseParser<T> implements Parser<T> {
 
   protected extractPrice(text: string): number | null {
     const patterns = [
-      /R?\$?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2}))/, // R$ 1.234,56
-      /R?\$?\s*(\d+[,.]\d{2})/, // R$ 10,99
-      /(\d+[,.]\d{2})(?:\s*(?:cada|un|kg|unidade))?/i, // 10,99 cada
+      // R$ 1.234,56 (preço com milhar)
+      /R?\$?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2}))/,
+      // R$ 10,99 ou R$10,99 (vírgula decimal)
+      /R?\$?\s*(\d+,\d{2})\b/,
+      // R$ 10.99 ou R$10.99 (ponto decimal)
+      /R?\$?\s*(\d+\.\d{2})\b/,
+      // 10,99 ou 10.99 (apenas números, tentativa mais ampla)
+      /(\d+[,.]\d{2})(?:\s*(?:cada|un|kg|unidade|o|a|por|s[oa])|\/)/i,
     ];
 
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match?.[1]) {
-        const cleaned = match[1].replace(/\./g, "").replace(",", ".");
-        const price = Number.parseFloat(cleaned);
-        if (!Number.isNaN(price) && price > 0) return price;
+        const normalized = match[1].replace(/\.(?=\d{3})/g, "").replace(",", ".");
+        const price = Number.parseFloat(normalized);
+        if (!Number.isNaN(price) && price > 0 && price < 1_000_000) return price;
       }
     }
     return null;
+  }
+
+  protected extractPriceFromRaw(rawText: string): number | null {
+    const cleaned = rawText
+      .replace(/[^\w\s.,$%\/\-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return this.extractPrice(cleaned);
   }
 
   protected extractQuantity(text: string): { quantity: number; unit: string } | null {
