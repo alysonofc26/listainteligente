@@ -44,16 +44,19 @@ export function CameraPreview({
   return (
     <div className="space-y-4">
       <div className="relative mx-auto aspect-[4/3] max-w-lg overflow-hidden rounded-xl bg-black">
-        {isStreaming ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-white/60">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={cn(
+            "h-full w-full object-cover",
+            !isStreaming && "hidden",
+          )}
+        />
+
+        {!isStreaming && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/60">
             <Camera className="h-12 w-12" />
             <p className="text-sm">Clique em Iniciar para abrir a câmera</p>
           </div>
