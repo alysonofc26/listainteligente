@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ScanLine } from "lucide-react";
 import { useCamera } from "@/hooks/use-camera";
@@ -49,6 +49,10 @@ export default function ScannerPage() {
   } = useOCR();
 
   const [listsLoaded, setListsLoaded] = useState(false);
+
+  useEffect(() => {
+    loadLists();
+  }, []);
 
   async function loadLists() {
     if (listsLoaded) return;
@@ -137,7 +141,11 @@ export default function ScannerPage() {
         </div>
       )}
 
-      {lists.length === 0 && !listsLoaded ? (
+      {!listsLoaded ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-pulse text-muted-foreground">Carregando listas...</div>
+        </div>
+      ) : lists.length === 0 ? (
         <div className="flex justify-center py-8">
           <EmptyState
             icon={ScanLine}
